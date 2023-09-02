@@ -177,6 +177,8 @@ const definitions: Definition[] = [
             await reporting.activePower(endpoint);
             await reporting.rmsCurrent(endpoint);
             await reporting.rmsVoltage(endpoint, {change: 10});
+            device.powerSource = 'Mains (single phase)';
+            device.save();
         },
         exposes: [e.switch(), e.power(), e.current(), e.voltage()],
     },
