@@ -36,27 +36,8 @@ const definitions: Definition[] = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint = device.getEndpoint(1);
             await reporting.bind(endpoint, coordinatorEndpoint, ['closuresWindowCovering']);
-            // Configure reporing of currentPositionLiftPercentage always fails.
+            // Configure reporting of currentPositionLiftPercentage always fails.
             // https://github.com/Koenkk/zigbee2mqtt/issues/3216
-        },
-    },
-    {
-        zigbeeModel: ['TS0003'],
-        model: 'ZM-L03E-Z',
-        vendor: 'Zemismart',
-        description: 'Smart light switch - 3 gang with neutral wire',
-        extend: extend.switch(),
-        exposes: [e.switch().withEndpoint('left'), e.switch().withEndpoint('center'), e.switch().withEndpoint('right')],
-        endpoint: (device) => {
-            return {'left': 1, 'center': 2, 'right': 3};
-        },
-        whiteLabel: [{vendor: 'BSEED', model: 'TS0003', description: 'Zigbee switch'}],
-        meta: {multiEndpoint: true, disableDefaultResponse: true},
-        configure: async (device, coordinatorEndpoint, logger) => {
-            await tuya.configureMagicPacket(device, coordinatorEndpoint, logger);
-            await reporting.bind(device.getEndpoint(1), coordinatorEndpoint, ['genOnOff']);
-            await reporting.bind(device.getEndpoint(2), coordinatorEndpoint, ['genOnOff']);
-            await reporting.bind(device.getEndpoint(3), coordinatorEndpoint, ['genOnOff']);
         },
     },
     {

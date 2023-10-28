@@ -270,6 +270,8 @@ const definitions: Definition[] = [
             const endpoint = device.getEndpoint(1);
             await reporting.bind(endpoint, coordinatorEndpoint, ['genOnOff', 'genLevelCtrl']);
             await reporting.onOff(endpoint);
+            device.powerSource = 'Mains (single phase)';
+            device.save();
         },
     },
     {
@@ -465,7 +467,7 @@ const definitions: Definition[] = [
             e.numeric('floor_sensor_calibration', ea.ALL)
                 .withUnit('°C')
                 .withValueMin(-3).withValueMax(3).withValueStep(0.1)
-                .withDescription('The tempearatue calibration for the exernal floor sensor, between -3 and 3 in 0.1°C.  Default: 0.'),
+                .withDescription('The tempearatue calibration for the external floor sensor, between -3 and 3 in 0.1°C.  Default: 0.'),
             e.numeric('dry_time', ea.ALL)
                 .withUnit('min')
                 .withValueMin(5).withValueMax(100)
@@ -678,7 +680,7 @@ const definitions: Definition[] = [
             e.climate()
                 .withSetpoint('occupied_heating_setpoint', 5, 35, 0.5)
                 .withLocalTemperature()
-                // Unit also supports Auto, but i havent added support the scheduler yet
+                // Unit also supports Auto, but i haven't added support the scheduler yet
                 // so the function is not listed for now, as this doesn´t allow you the set the temperature
                 .withSystemMode(['off', 'heat'])
                 .withLocalTemperatureCalibration(-3, 3, 0.1)
@@ -857,6 +859,15 @@ const definitions: Definition[] = [
             await reporting.bind(endpoint, coordinatorEndpoint, ['genPowerCfg']);
             await reporting.batteryPercentageRemaining(endpoint);
         },
+    },
+    {
+        zigbeeModel: ['4512765'],
+        model: '4512765',
+        vendor: 'Namron',
+        description: 'Zigbee humidity and temperature Sensor',
+        fromZigbee: [fz.battery, fz.temperature, fz.humidity],
+        toZigbee: [],
+        exposes: [e.battery(), e.temperature(), e.humidity()],
     },
 ];
 

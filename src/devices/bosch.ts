@@ -392,6 +392,7 @@ const fzLocal = {
             const lookup: KeyValue = {0: 'none', 1: 'single', 2: 'long'};
             const result = {
                 contact: !((zoneStatus & 1) > 0),
+                vibration: (zoneStatus & 1<<1) > 0,
                 battery_low: (zoneStatus & 1<<3) > 0,
                 action: lookup[(zoneStatus >> 11) & 3],
             };
@@ -694,7 +695,7 @@ const definitions: Definition[] = [
             e.numeric('display_ontime', ea.ALL)
                 .withValueMin(5)
                 .withValueMax(30)
-                .withDescription('Specifies the diplay On-time'),
+                .withDescription('Specifies the display On-time'),
             e.numeric('display_brightness', ea.ALL)
                 .withValueMin(0)
                 .withValueMax(10)
@@ -752,33 +753,43 @@ const definitions: Definition[] = [
         zigbeeModel: ['RBSH-RTH0-BAT-ZB-EU'],
         model: 'BTH-RM',
         vendor: 'Bosch',
-        description: 'Room thermostat II',
+        description: 'Room thermostat II (Battery model)',
         fromZigbee: [fz.humidity, fz.thermostat, fz.battery, fzLocal.bosch_thermostat, fzLocal.bosch_userInterface],
         toZigbee: [tz.thermostat_occupied_heating_setpoint, tz.thermostat_local_temperature_calibration,
             tz.thermostat_local_temperature, tz.thermostat_keypad_lockout, tzLocal.bosch_thermostat, tzLocal.bosch_userInterface],
         exposes: [
-            e.numeric('humidity', ea.STATE).withUnit('%').withDescription('Measured relative humidity'),
             e.climate()
                 .withLocalTemperature()
                 .withSetpoint('occupied_heating_setpoint', 5, 30, 0.5)
                 .withLocalTemperatureCalibration(-12, 12, 0.5)
                 .withSystemMode(['off', 'heat', 'auto']),
+            e.humidity(),
             e.binary('window_open', ea.ALL, 'ON', 'OFF').withDescription('Window open'),
             e.child_lock().setAccess('state', ea.ALL),
-            e.numeric('display_ontime', ea.ALL).withValueMin(5).withValueMax(30).withDescription('Specifies the diplay On-time'),
+            e.numeric('display_ontime', ea.ALL).withValueMin(5).withValueMax(30).withDescription('Specifies the display On-time'),
             e.numeric('display_brightness', ea.ALL).withValueMin(0).withValueMax(10).withDescription('Specifies the brightness value of the display'),
             e.battery_low(), e.battery_voltage(),
         ],
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint = device.getEndpoint(1);
-            await reporting.bind(endpoint, coordinatorEndpoint, ['genPowerCfg', 'hvacThermostat', 'hvacUserInterfaceCfg']);
+            await reporting.bind(endpoint, coordinatorEndpoint, ['genPowerCfg', 'hvacThermostat', 'hvacUserInterfaceCfg', 'msRelativeHumidity']);
             await reporting.thermostatOccupiedHeatingSetpoint(endpoint);
+            await reporting.thermostatKeypadLockMode(endpoint);
             await reporting.thermostatTemperature(endpoint);
             await reporting.humidity(endpoint);
+
+            // report is window_open
+            await endpoint.configureReporting('hvacThermostat', [{
+                attribute: {ID: 0x4042, type: Zcl.DataType.enum8},
+                minimumReportInterval: 0,
+                maximumReportInterval: constants.repInterval.HOUR,
+                reportableChange: 1,
+            }], boschManufacturer);
+
             await endpoint.read('hvacThermostat', ['localTemperatureCalibration']);
             await endpoint.read('hvacThermostat', [0x4007, 0x4042, 0x4043], boschManufacturer);
             await endpoint.read('hvacUserInterfaceCfg', ['keypadLockout']);
-            await endpoint.read('hvacUserInterfaceCfg', [0x400b, 0x403a, 0x403b], boschManufacturer);
+            await endpoint.read('hvacUserInterfaceCfg', [0x403a, 0x403b], boschManufacturer);
         },
     },
     {
@@ -798,7 +809,7 @@ const definitions: Definition[] = [
                 .withSystemMode(['off', 'heat', 'auto']),
             e.binary('window_open', ea.ALL, 'ON', 'OFF').withDescription('Window open'),
             e.child_lock().setAccess('state', ea.ALL),
-            e.numeric('display_ontime', ea.ALL).withValueMin(5).withValueMax(30).withDescription('Specifies the diplay On-time'),
+            e.numeric('display_ontime', ea.ALL).withValueMin(5).withValueMax(30).withDescription('Specifies the display On-time'),
             e.numeric('display_brightness', ea.ALL).withValueMin(0).withValueMax(10).withDescription('Specifies the brightness value of the display'),
         ],
         configure: async (device, coordinatorEndpoint, logger) => {
@@ -905,6 +916,15 @@ const definitions: Definition[] = [
         exposes: [e.battery_low(), e.contact(), e.action(['single', 'long'])],
     },
     {
+        zigbeeModel: ['RBSH-SWDV-ZB'],
+        model: 'BSEN-CV',
+        vendor: 'Bosch',
+        description: 'Door/window contact II plus',
+        fromZigbee: [fzLocal.bosch_contact],
+        toZigbee: [],
+        exposes: [e.battery_low(), e.contact(), e.vibration(), e.action(['single', 'long'])],
+    },
+    {
         zigbeeModel: ['RBSH-MMS-ZB-EU'],
         model: 'BMCT-SLZ',
         vendor: 'Bosch',
@@ -948,9 +968,9 @@ const definitions: Definition[] = [
             e.enum('motor_state', ea.STATE, Object.keys(stateMotor))
                 .withDescription('Shutter motor actual state '),
             e.binary('child_lock', ea.ALL, 'ON', 'OFF').withDescription('Enable/Disable child lock'),
-            e.numeric('calibration_closing_time', ea.ALL).withUnit('S')
+            e.numeric('calibration_closing_time', ea.ALL).withUnit('s')
                 .withDescription('Calibration opening time').withValueMin(1).withValueMax(90),
-            e.numeric('calibration_opening_time', ea.ALL).withUnit('S')
+            e.numeric('calibration_opening_time', ea.ALL).withUnit('s')
                 .withDescription('Calibration closing time').withValueMin(1).withValueMax(90),
         ],
     },

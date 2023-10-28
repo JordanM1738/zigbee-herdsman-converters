@@ -3,6 +3,7 @@ import * as exposes from '../lib/exposes';
 import fz from '../converters/fromZigbee';
 import * as reporting from '../lib/reporting';
 import extend from '../lib/extend';
+import * as ota from '../lib/ota';
 const e = exposes.presets;
 
 const definitions: Definition[] = [
@@ -12,6 +13,7 @@ const definitions: Definition[] = [
         vendor: 'Candeo',
         description: 'Zigbee LED smart dimmer switch',
         extend: extend.light_onoff_brightness({noConfigure: true, disableEffect: true}),
+        ota: ota.zigbeeOTA,
         configure: async (device, coordinatorEndpoint, logger) => {
             await extend.light_onoff_brightness().configure(device, coordinatorEndpoint, logger);
             const endpoint = device.getEndpoint(1);
@@ -41,6 +43,7 @@ const definitions: Definition[] = [
         vendor: 'Candeo',
         description: 'Zigbee LED dimmer smart switch',
         extend: extend.light_onoff_brightness({noConfigure: true, disableEffect: true}),
+        ota: ota.zigbeeOTA,
         configure: async (device, coordinatorEndpoint, logger) => {
             await extend.light_onoff_brightness().configure(device, coordinatorEndpoint, logger);
             const endpoint = device.getEndpoint(1);
@@ -48,7 +51,7 @@ const definitions: Definition[] = [
             await reporting.onOff(endpoint);
 
             // The default reporting from the Candeo dimmer can result in a lot of Zigbee traffic
-            // to the extent that reported brighness values can arrive at the endpoint out of order
+            // to the extent that reported brightness values can arrive at the endpoint out of order
             // giving the appearance that the values are jumping around.
             // Limit the reporting to once a second to give a smoother reporting of brightness.
             await reporting.brightness(endpoint, {min: 1});

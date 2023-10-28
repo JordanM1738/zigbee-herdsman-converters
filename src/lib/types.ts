@@ -5,6 +5,9 @@ import type {
     Endpoint as ZHEndpoint,
     Group as ZHGroup,
 } from 'zigbee-herdsman/dist/controller/model';
+import type {
+    ZclHeader as ZHZclHeader,
+} from 'zigbee-herdsman/dist/zcl';
 
 import * as exposes from './exposes';
 
@@ -27,7 +30,7 @@ export type OnEventType = 'start' | 'stop' | 'message' | 'deviceJoined' | 'devic
 export type Access = 0b001 | 0b010 | 0b100 | 0b011 | 0b101 | 0b111;
 export type Expose = exposes.Numeric | exposes.Binary | exposes.Enum | exposes.Composite | exposes.List | exposes.Light | exposes.Switch |
     exposes.Lock | exposes.Cover | exposes.Climate | exposes.Text;
-export type Option = exposes.Numeric | exposes.Binary | exposes.Composite | exposes.Enum | exposes.List;
+export type Option = exposes.Numeric | exposes.Binary | exposes.Composite | exposes.Enum | exposes.List | exposes.Text;
 export interface Fingerprint {
     modelID?: string, manufacturerName?: string, type?: 'EndDevice' | 'Router', manufacturerID?: number, applicationVersion?: number,
     powerSource?: 'Battery' | 'Mains (single phase)', softwareBuildID?: string, ieeeAddr?: RegExp,
@@ -44,7 +47,7 @@ export interface DefinitionMeta {
     multiEndpointEnforce?: {[s: string]: number},
     publishDuplicateTransaction?: boolean,
     tuyaDatapoints?: Tuya.MetaTuyaDataPoints,
-    disableDefaultResponse?: boolean,
+    disableDefaultResponse?: boolean | ((entity: Zh.Endpoint) => boolean),
     pinCodeCount?: number,
     coverInverted?: boolean,
     timeout?: number,
@@ -138,6 +141,7 @@ export namespace Zh {
     export type Endpoint = ZHEndpoint;
     export type Device = ZHDevice;
     export type Group = ZHGroup;
+    export type ZclHeader = ZHZclHeader;
 }
 
 export namespace Tuya {
@@ -150,7 +154,7 @@ export namespace Tuya {
         to?: (value: unknown, meta?: Tz.Meta) => unknown,
         from?: (value: unknown, meta?: Fz.Meta, options?: KeyValue, publish?: Publish) => KeyValue,
     }
-    export interface MetaTuyaDataPointsMeta {skip: (meta: Tz.Meta) => boolean, optimistic?: boolean}
+    export interface MetaTuyaDataPointsMeta {skip?: (meta: Tz.Meta) => boolean, optimistic?: boolean}
     export type MetaTuyaDataPointsSingle = [number, string, Tuya.ValueConverterSingle, MetaTuyaDataPointsMeta?];
     export type MetaTuyaDataPoints = MetaTuyaDataPointsSingle[];
 }
